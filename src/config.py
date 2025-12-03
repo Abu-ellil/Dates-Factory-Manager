@@ -4,6 +4,20 @@ Handles environment variables and secure defaults
 """
 import os
 from datetime import datetime
+from pathlib import Path
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    # Get the directory where this config file is located
+    basedir = Path(__file__).resolve().parent
+    dotenv_path = basedir / '.env'
+    if dotenv_path.exists():
+        load_dotenv(dotenv_path)
+except ImportError:
+    # python-dotenv not installed, will use system environment variables only
+    pass
+
 
 class Config:
     """Application configuration with secure defaults"""
