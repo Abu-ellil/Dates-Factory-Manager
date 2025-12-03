@@ -5,9 +5,11 @@ import os
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash
 import license_manager
+from config import config
+from security_utils import SecurityUtils
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
+app.config['SECRET_KEY'] = config.SECRET_KEY
 
 # Initialize Login Manager
 login_manager = LoginManager()
@@ -88,19 +90,20 @@ def login():
         user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         conn.close()
         
-        # Simple password check for demo (in production use check_password_hash)
-        # We will support both plain text (for initial setup) and hashed
+        # Secure password verification using hashing only
         if user:
-            is_valid = False
-            if user['password'].startswith('scrypt:'):
-                is_valid = check_password_hash(user['password'], password)
-            else:
-                is_valid = user['password'] == password
-                
+            is_valid = SecurityUtils.verify_password(user['password'], password)
+            
             if is_valid:
+                # Log successful login
+                SecurityUtils.log_security_event('LOGIN_SUCCESS', 'User logged in successfully', user['id'])
+                
                 user_obj = User(user['id'], user['username'], user['role'])
                 login_user(user_obj)
                 return redirect(url_for('dashboard'))
+            else:
+                # Log failed login attempt
+                SecurityUtils.log_security_event('LOGIN_FAILED', f'Failed login attempt for username: {username}', None)
         
         return render_template('login.html', error='اسم المستخدم أو كلمة المرور غير صحيحة')
         
@@ -185,21 +188,47 @@ def api_customers():
     conn = get_connection()
     
     if request.method == 'POST':
-        data = request.json
         try:
+            data = request.json
+            if not data:
+                return jsonify({'success': False, 'message': 'بيانات غير صحيحة'}), 400
+            
+            # Validate input data
+            is_valid, errors = SecurityUtils.validate_customer_data(data)
+            if not is_valid:
+                return jsonify({'success': False, 'message': '; '.join(errors)}), 400
+            
+            # Extract validated data
+            name = data['name'].strip()
+            customer_type = data['type'].strip()
+            phone = data.get('phone', '').strip() if data.get('phone') else ''
+            
+            # Log the attempt
+            SecurityUtils.log_security_event('CUSTOMER_CREATE', f'Creating customer: {name}', current_user.id if current_user.is_authenticated else None)
+            
             conn.execute('INSERT INTO customers (name, type, phone) VALUES (?, ?, ?)',
-                        (data['name'], data['type'], data.get('phone', '')))
+                        (name, customer_type, phone))
             conn.commit()
+            
             return jsonify({'success': True, 'message': 'تم إضافة العميل بنجاح'})
+            
         except Exception as e:
-            return jsonify({'success': False, 'message': str(e)}), 400
+            SecurityUtils.log_security_event('CUSTOMER_CREATE_ERROR', f'Error creating customer: {str(e)}', 
+                                           current_user.id if current_user.is_authenticated else None)
+            return jsonify({'success': False, 'message': 'خطأ في إضافة العميل'}), 500
         finally:
             conn.close()
     
     # GET request
-    customers = conn.execute('SELECT * FROM customers ORDER BY name').fetchall()
-    conn.close()
-    return jsonify([dict(c) for c in customers])
+    try:
+        customers = conn.execute('SELECT * FROM customers ORDER BY name').fetchall()
+        return jsonify([dict(c) for c in customers])
+    except Exception as e:
+        SecurityUtils.log_security_event('CUSTOMER_LIST_ERROR', f'Error fetching customers: {str(e)}',
+                                       current_user.id if current_user.is_authenticated else None)
+        return jsonify({'success': False, 'message': 'خطأ في جلب قائمة العملاء'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/customers/<int:customer_id>', methods=['DELETE'])
 def api_delete_customer(customer_id):

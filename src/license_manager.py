@@ -7,9 +7,9 @@ import json
 import os
 from datetime import datetime
 
-# SECRET KEY - CHANGE THIS FOR YOUR PRODUCTION RELEASE!
-# This key is used to sign the licenses. Keep it safe.
-SECRET_KEY = b"DATE_FACTORY_MANAGER_SECRET_KEY_2025_SECURE"
+# Security: Secret key now managed through config.py
+from config import config
+SECRET_KEY = config.get_license_secret_key()
 
 def get_machine_id():
     """

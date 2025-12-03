@@ -1,8 +1,10 @@
 import sqlite3
 from datetime import datetime
 import os
+from config import config
+from security_utils import SecurityUtils
 
-DB_PATH = 'date_factory.db'
+DB_PATH = config.DATABASE_PATH
 
 def get_connection():
     """Get database connection"""
@@ -120,13 +122,12 @@ def add_sample_data():
         cursor.execute('INSERT OR IGNORE INTO daily_prices (date, price_per_qantar) VALUES (?, ?)',
                       (datetime.now().strftime('%Y-%m-%d'), 150.0))
         
-        # Add default admin user (password: admin123)
-        # We store it as plain text for initial setup to ensure it works on all devices.
-        # The app supports upgrading to hashed passwords later or handling plain text.
-        admin_pass = 'admin123'
+        # Add default admin user with secure hashed password
+        admin_password = 'admin123'  # This should be changed immediately in production
+        hashed_admin_password = SecurityUtils.hash_password(admin_password)
 
         cursor.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
-                      ('admin', admin_pass, 'admin'))
+                      ('admin', hashed_admin_password, 'admin'))
 
         conn.commit()
         print("Sample data added successfully!")
