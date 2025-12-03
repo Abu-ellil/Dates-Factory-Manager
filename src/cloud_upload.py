@@ -2,10 +2,6 @@ import os
 from telegram import Bot
 from telegram.error import TelegramError
 import asyncio
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Configuration - You need to set these values
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE')

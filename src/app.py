@@ -33,6 +33,8 @@ def load_user(user_id):
 # Initialize database on first run
 if not os.path.exists('date_factory.db'):
     init_db()
+    from database import add_sample_data
+    add_sample_data()
 
 # Start backup scheduler
 from backup_scheduler import start_scheduler
@@ -136,13 +138,13 @@ def customers():
 def weighbridge():
     """Weighbridge transactions page"""
     conn = get_connection()
-    transactions = conn.execute('''
-        SELECT w.*, c.name as customer_name 
+    transactions = [dict(row) for row in conn.execute('''
+        SELECT w.*, c.name as customer_name
         FROM weighbridge w
         JOIN customers c ON w.customer_id = c.id
         ORDER BY w.date DESC, w.created_at DESC
         LIMIT 100
-    ''').fetchall()
+    ''').fetchall()]
     conn.close()
     return render_template('weighbridge.html', transactions=transactions)
 
@@ -151,13 +153,13 @@ def weighbridge():
 def crates():
     """Crates management page"""
     conn = get_connection()
-    crates_list = conn.execute('''
-        SELECT cr.*, c.name as customer_name 
+    crates_list = [dict(row) for row in conn.execute('''
+        SELECT cr.*, c.name as customer_name
         FROM crates cr
         JOIN customers c ON cr.customer_id = c.id
         ORDER BY cr.date DESC
         LIMIT 100
-    ''').fetchall()
+    ''').fetchall()]
     conn.close()
     return render_template('crates.html', crates=crates_list)
 
@@ -166,13 +168,13 @@ def crates():
 def finance():
     """Finance management page"""
     conn = get_connection()
-    transactions = conn.execute('''
-        SELECT f.*, c.name as customer_name 
+    transactions = [dict(row) for row in conn.execute('''
+        SELECT f.*, c.name as customer_name
         FROM finance f
         JOIN customers c ON f.customer_id = c.id
         ORDER BY f.date DESC
         LIMIT 100
-    ''').fetchall()
+    ''').fetchall()]
     conn.close()
     return render_template('finance.html', transactions=transactions)
 
@@ -589,72 +591,23 @@ def export_excel():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/restore', methods=['GET'])
-@login_required
-def restore_page():
-    """Restore data page"""
-    return render_template('restore.html')
-
-@app.route('/api/restore', methods=['POST'])
-@login_required
-def api_restore():
-    """Handle data restoration from Excel file"""
-    if 'file' not in request.files:
-        return jsonify({'success': False, 'message': 'لم يتم اختيار ملف'}), 400
-    
-    file = request.files['file']
-    mode = request.form.get('mode', 'merge')
-    
-    if file.filename == '':
-        return jsonify({'success': False, 'message': 'لم يتم اختيار ملف'}), 400
-    
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        return jsonify({'success': False, 'message': 'يجب أن يكون الملف بصيغة Excel (.xlsx أو .xls)'}), 400
-    
-    try:
-        # Save file temporarily
-        import tempfile
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-            file.save(tmp.name)
-            tmp_path = tmp.name
-        
-        # Restore from file
-        from restore_data import restore_from_excel
-        stats = restore_from_excel(tmp_path, mode)
-        
-        # Clean up temp file
-        os.remove(tmp_path)
-        
-        if 'error' in stats:
-            return jsonify({'success': False, 'message': stats['error']}), 500
-        
-        return jsonify({
-            'success': True,
-            'message': 'تمت استعادة البيانات بنجاح',
-            'stats': stats
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
 if __name__ == '__main__':
     import webbrowser
     import threading
     
     print("=" * 60)
-    print("🌴 Date Factory Manager - مدير مصنع التمور 🌴")
+    print("Date Factory Manager - مدير مصنع التمور")
     print("=" * 60)
     print()
-    print("🚀 Starting server...")
+    print("Starting server...")
     print()
-    print("🌐 Access URLs:")
+    print("Access URLs:")
     print("   • From this PC: http://localhost:5000")
     print("   • From mobile: http://<YOUR-PC-IP>:5000")
     print()
-    print("💡 Tip: Find your PC IP by running 'ipconfig' in CMD")
+    print("Tip: Find your PC IP by running 'ipconfig' in CMD")
     print()
-    print("⚠️  Keep this window open while using the application")
+    print("Keep this window open while using the application")
     print("=" * 60)
     print()
     

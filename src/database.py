@@ -100,7 +100,7 @@ def init_db():
     
     conn.commit()
     conn.close()
-    print("✅ Database initialized successfully!")
+    print("Database initialized successfully!")
 
 def add_sample_data():
     """Add sample data for testing"""
@@ -129,9 +129,9 @@ def add_sample_data():
                       ('admin', admin_pass, 'admin'))
 
         conn.commit()
-        print("✅ Sample data added successfully!")
+        print("Sample data added successfully!")
     except Exception as e:
-        print(f"⚠️ Error adding sample data: {e}")
+        print(f"Error adding sample data: {e}")
     finally:
         conn.close()
 
