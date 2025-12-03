@@ -9,45 +9,67 @@ from pathlib import Path
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
-    # Get the directory where this config file is located
-    basedir = Path(__file__).resolve().parent
-    dotenv_path = basedir / '.env'
-    if dotenv_path.exists():
-        load_dotenv(dotenv_path)
+    import sys
+    
+    # Determine base directory
+    if getattr(sys, 'frozen', False):
+        # If running as compiled exe, look in the temporary folder (sys._MEIPASS)
+        # AND the executable folder
+        base_dir = Path(sys._MEIPASS)
+        exe_dir = Path(sys.executable).parent
+        
+        # Try loading from temp folder first (bundled file)
+        dotenv_path = base_dir / '.env'
+        if dotenv_path.exists():
+            load_dotenv(dotenv_path)
+            
+        # Also try loading from executable folder (if user provided one)
+        dotenv_local = exe_dir / '.env'
+        if dotenv_local.exists():
+            load_dotenv(dotenv_local, override=True)
+    else:
+        # Running as script
+        base_dir = Path(__file__).resolve().parent
+        dotenv_path = base_dir / '.env'
+        if dotenv_path.exists():
+            load_dotenv(dotenv_path)
 except ImportError:
     # python-dotenv not installed, will use system environment variables only
     pass
 
 
+def get_app_data_dir():
+    """Get the application data directory in AppData"""
+    app_data = os.getenv('APPDATA')
+    if not app_data:
+        app_data = os.path.expanduser('~')
+    
+    data_dir = os.path.join(app_data, 'DateFactoryManager')
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir, exist_ok=True)
+    return data_dir
+
 class Config:
     """Application configuration with secure defaults"""
     
+    # Data Directory
+    DATA_DIR = get_app_data_dir()
+    
     # Security Settings
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        # Generate a secure random key for this session
-        # In production, this should always come from environment variables
-        import secrets
-        SECRET_KEY = secrets.token_urlsafe(32)
-        print("WARNING: Using generated SECRET_KEY. Set SECRET_KEY environment variable in production!")
+    # HARDCODED KEYS FOR PRODUCTION STABILITY
+    # This ensures the license key matches regardless of environment variables
+    SECRET_KEY = "DateFactory2025SecureProductionKey!@#"
+    
+    # License Management
+    # This MUST match the key used in generate_license.py
+    LICENSE_SECRET_KEY = "DateFactoryLicense2025FixedKey!@#$%"
 
     # Database Configuration
-    DATABASE_PATH = os.environ.get('DATABASE_PATH', 'date_factory.db')
+    DATABASE_PATH = os.environ.get('DATABASE_PATH', os.path.join(DATA_DIR, 'date_factory.db'))
 
     # Flask Configuration
     FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
     DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
-
-    # License Management
-    LICENSE_SECRET_KEY = os.environ.get('LICENSE_SECRET_KEY')
-    if not LICENSE_SECRET_KEY:
-        # Use SECRET_KEY as fallback for license signing
-        LICENSE_SECRET_KEY = SECRET_KEY
-        print("WARNING: Using SECRET_KEY for license signing. Set LICENSE_SECRET_KEY in production!")
-        # For development, use a fixed key to avoid signature issues
-        if FLASK_ENV.lower() != 'production':
-            LICENSE_SECRET_KEY = "test_secret_key_12345"
-            print("INFO: Using fixed development license key")
     
     # Security Headers
     SECURITY_HEADERS = {

@@ -70,8 +70,14 @@ def verify_license_key(license_key, machine_id):
         # Verify signature
         expected_signature = hmac.new(SECRET_KEY, payload_str.encode(), hashlib.sha256).hexdigest()[:16].upper()
         
+        # DEBUG LOGGING
+        print(f"DEBUG: Checking Key: {license_key}")
+        print(f"DEBUG: Using Secret Key (first 5 chars): {str(SECRET_KEY)[:5]}...")
+        print(f"DEBUG: Expected Signature: {expected_signature}")
+        print(f"DEBUG: Actual Signature:   {signature}")
+        
         if signature != expected_signature:
-            return False, "Invalid signature"
+            return False, f"Invalid signature (Expected: {expected_signature}, Got: {signature})"
             
         # Decode payload
         payload = json.loads(base64.b64decode(payload_str).decode())
@@ -91,16 +97,58 @@ def verify_license_key(license_key, machine_id):
     except Exception as e:
         return False, f"Error verifying key: {str(e)}"
 
+def get_license_file_path():
+    """Get the path to the license file in AppData"""
+    app_data = os.getenv('APPDATA')
+    if not app_data:
+        app_data = os.path.expanduser('~')
+    
+    app_dir = os.path.join(app_data, 'DateFactoryManager')
+    if not os.path.exists(app_dir):
+        os.makedirs(app_dir, exist_ok=True)
+        
+    return os.path.join(app_dir, 'license.key')
+
 def save_license(license_key):
-    """Saves the license key to a file."""
-    with open("license.key", "w") as f:
-        f.write(license_key)
+    """Saves the license key to a file in AppData."""
+    try:
+        license_path = get_license_file_path()
+        with open(license_path, "w") as f:
+            f.write(license_key)
+        return True
+    except Exception as e:
+        print(f"Error saving license: {e}")
+        raise e
 
 def load_license():
     """Loads the license key from file."""
+    # 1. Try AppData (new standard location)
+    try:
+        license_path = get_license_file_path()
+        if os.path.exists(license_path):
+            with open(license_path, "r") as f:
+                return f.read().strip()
+    except Exception:
+        pass
+
+    # 2. Fallback: Try script directory (legacy/portable)
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        license_path = os.path.join(script_dir, "license.key")
+        if os.path.exists(license_path):
+            with open(license_path, "r") as f:
+                return f.read().strip()
+    except Exception:
+        pass
+    
+    # 3. Fallback: Current directory
     if os.path.exists("license.key"):
-        with open("license.key", "r") as f:
-            return f.read().strip()
+        try:
+            with open("license.key", "r") as f:
+                return f.read().strip()
+        except Exception:
+            pass
+    
     return None
 
 def check_license():

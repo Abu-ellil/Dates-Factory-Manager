@@ -33,10 +33,26 @@ def load_user(user_id):
     return None
 
 # Initialize database on first run
-if not os.path.exists('date_factory.db'):
+# Initialize database on first run
+if not os.path.exists(config.DATABASE_PATH):
     init_db()
     from database import add_sample_data
     add_sample_data()
+else:
+    # Database exists, ensure admin user exists (for upgrades/reinstalls)
+    try:
+        conn = get_connection()
+        # Check if users table exists first (migration safety)
+        table_check = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").fetchone()
+        if table_check:
+            admin = conn.execute("SELECT id FROM users WHERE username='admin'").fetchone()
+            if not admin:
+                print("Admin user missing. Creating default admin...")
+                from database import add_sample_data
+                add_sample_data()
+        conn.close()
+    except Exception as e:
+        print(f"Error checking admin user: {e}")
 
 # Start backup scheduler
 from backup_scheduler import start_scheduler
@@ -65,17 +81,35 @@ def activate():
 @app.route('/activate', methods=['POST'])
 def activate_post():
     """Handle activation"""
-    license_key = request.form.get('license_key', '').strip()
-    machine_id = license_manager.get_machine_id()
-    
-    is_valid, message = license_manager.verify_license_key(license_key, machine_id)
-    
-    if is_valid:
-        license_manager.save_license(license_key)
-        flash('تم تفعيل البرنامج بنجاح!', 'success')
-        return redirect(url_for('index'))
-    else:
-        return render_template('activate.html', machine_id=machine_id, error=message)
+    try:
+        license_key = request.form.get('license_key', '').strip()
+        machine_id = license_manager.get_machine_id()
+
+        print(f"DEBUG: Received license key: {license_key}")
+        print(f"DEBUG: Machine ID: {machine_id}")
+
+        is_valid, message = license_manager.verify_license_key(license_key, machine_id)
+
+        print(f"DEBUG: Validation result - is_valid: {is_valid}, message: {message}")
+
+        if is_valid:
+            try:
+                license_manager.save_license(license_key)
+                flash('تم تفعيل البرنامج بنجاح!', 'success')
+                return redirect(url_for('index'))
+            except Exception as e:
+                print(f"ERROR saving license: {str(e)}")
+                return render_template('activate.html', machine_id=machine_id, 
+                                     error=f"خطأ في حفظ مفتاح التفعيل: {str(e)}")
+        else:
+            # If in production, show a generic error but log the details
+            # For debugging now, we'll show the full message
+            return render_template('activate.html', machine_id=machine_id, error=message)
+    except Exception as e:
+        print(f"ERROR in activate_post: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return render_template('activate.html', machine_id=machine_id, error="Internal Server Error: " + str(e))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

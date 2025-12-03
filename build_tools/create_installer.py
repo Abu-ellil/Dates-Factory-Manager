@@ -152,11 +152,17 @@ def check_dependencies():
     required_packages = {
         'PyInstaller': 'pyinstaller==6.3.0',
         'Pillow': 'Pillow',
+        'python-dotenv': 'python-dotenv',
     }
     
     for package_name, package_spec in required_packages.items():
         try:
-            __import__('PIL' if package_name == 'Pillow' else 'PyInstaller')
+            if package_name == 'Pillow':
+                __import__('PIL')
+            elif package_name == 'python-dotenv':
+                __import__('dotenv')
+            else:
+                __import__('PyInstaller')
             print_success(f"{package_name} is installed")
         except ImportError:
             print_warning(f"{package_name} not found. Installing...")
@@ -220,11 +226,14 @@ def build_portable_app():
         else:
             print_warning(f"File not found: {file}")
     
-    # Copy database if exists
-    db_path = "../src/date_factory.db"
-    if os.path.exists(db_path):
-        shutil.copy2(db_path, dist_folder)
-        print_info("Copied date_factory.db")
+    # Do NOT copy database - we want fresh installs to generate a new DB with default admin
+    # db_path = "../src/date_factory.db"
+    # if os.path.exists(db_path):
+    #     shutil.copy2(db_path, dist_folder)
+    #     print_info("Copied date_factory.db")
+        
+    # Do NOT copy license.key - we want fresh installs to be unactivated
+    # Do NOT copy license_keys.db - we want fresh installs to have no history
     
     # Create exports folder
     exports_folder = os.path.join(dist_folder, "exports")

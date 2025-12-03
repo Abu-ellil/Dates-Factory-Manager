@@ -512,8 +512,10 @@ def main():
             from app import app
             app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
         except Exception as e:
-            # If something goes wrong, write to a log file since we have no console
-            with open('server_error.log', 'w') as f:
+            # If something goes wrong, write to a log file in AppData
+            from config import config
+            log_path = os.path.join(config.DATA_DIR, 'server_error.log')
+            with open(log_path, 'w') as f:
                 f.write(str(e))
         return
 
