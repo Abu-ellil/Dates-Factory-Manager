@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}المالية - Date Factory Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-gray-800">💰 إدارة المالية</h2>
+        <button onclick="showAddModal()"
+            class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg shadow-md transition duration-200 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                </path>
+            </svg>
+            إضافة معاملة مالية
+        </button>
+    </div>
+
+    <!-- Finance Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-primary text-white">
+                    <tr>
+                        <th class="px-6 py-4 text-right">التاريخ</th>
+                        <th class="px-6 py-4 text-right">اسم العميل</th>
+                        <th class="px-6 py-4 text-right">نوع المعاملة</th>
+                        <th class="px-6 py-4 text-right">مدفوع للعميل (له)</th>
+                        <th class="px-6 py-4 text-right">مقبوض من العميل (عليه)</th>
+                        <th class="px-6 py-4 text-right">ملاحظات</th>
+                        <th class="px-6 py-4 text-right">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for trans in transactions %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4">{{ trans.date }}</td>
+                        <td class="px-6 py-4 font-semibold">{{ trans.customer_name }}</td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="px-3 py-1 rounded-full text-sm {% if trans.transaction_type == 'نقدية' %}bg-green-100 text-green-800{% elif trans.transaction_type == 'تحويل بنكي' %}bg-blue-100 text-blue-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                                {{ trans.transaction_type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-red-600 font-bold">{{ "%.2f"|format(trans.amount_paid) }}</td>
+                        <td class="px-6 py-4 text-green-600 font-bold">{{ "%.2f"|format(trans.amount_received) }}</td>
+                        <td class="px-6 py-4 text-gray-500 text-sm">{{ trans.notes or '-' }}</td>
+                        <td class="px-6 py-4 flex gap-2">
+                            <button onclick='editFinance({{ trans|tojson }})'
+                                class="text-blue-600 hover:text-blue-800 transition" title="تعديل">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button onclick="deleteFinance({{ trans.id }})"
+                                class="text-red-600 hover:text-red-800 transition" title="حذف">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                            لا توجد معاملات مالية حالياً.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Finance Modal -->
+<div id="addModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-2xl font-bold text-gray-800" id="modalTitle">إضافة معاملة مالية</h3>
+            <button onclick="hideAddModal()" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="addFinanceForm" class="space-y-4">
+            <input type="hidden" id="editId">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">التاريخ *</label>
+                <input type="date" id="financeDate" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">العميل *</label>
+                <select id="customerId" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">-- اختر العميل --</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">نوع المعاملة *</label>
+                <select id="transactionType" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">-- اختر النوع --</option>
+                    <option value="نقدية">نقدية</option>
+                    <option value="تحويل بنكي">تحويل بنكي</option>
+                    <option value="شيك">شيك</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">مدفوع للعميل (له)</label>
+                <input type="number" step="0.01" id="amountPaid" value="0" min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">مقبوض من العميل (عليه)</label>
+                <input type="number" step="0.01" id="amountReceived" value="0" min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">ملاحظات</label>
+                <textarea id="notes" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="اختياري"></textarea>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button type="submit"
+                    class="flex-1 bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-semibold transition">
+                    حفظ
+                </button>
+                <button type="button" onclick="hideAddModal()"
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition">
+                    إلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadCustomers() {
+        const response = await fetch('/api/customers');
+        const customers = await response.json();
+
+        const select = document.getElementById('customerId');
+        select.innerHTML = '<option value="">-- اختر العميل --</option>';
+        customers.forEach(customer => {
+            const option = document.createElement('option');
+            option.value = customer.id;
+            option.textContent = customer.name;
+            select.appendChild(option);
+        });
+    }
+
+    function showAddModal() {
+        document.getElementById('addModal').classList.remove('hidden');
+        document.getElementById('modalTitle').textContent = 'إضافة معاملة مالية';
+        document.getElementById('editId').value = '';
+        document.getElementById('financeDate').valueAsDate = new Date();
+        document.getElementById('addFinanceForm').reset();
+        document.getElementById('financeDate').valueAsDate = new Date();
+    }
+
+    function editFinance(trans) {
+        document.getElementById('addModal').classList.remove('hidden');
+        document.getElementById('modalTitle').textContent = 'تعديل معاملة مالية';
+        document.getElementById('editId').value = trans.id;
+        document.getElementById('financeDate').value = trans.date;
+        document.getElementById('customerId').value = trans.customer_id;
+        document.getElementById('transactionType').value = trans.transaction_type;
+        document.getElementById('amountPaid').value = trans.amount_paid;
+        document.getElementById('amountReceived').value = trans.amount_received;
+        document.getElementById('notes').value = trans.notes || '';
+    }
+
+    function hideAddModal() {
+        document.getElementById('addModal').classList.add('hidden');
+        document.getElementById('addFinanceForm').reset();
+    }
+
+    async function deleteFinance(id) {
+        if (!confirm('هل أنت متأكد من حذف هذه المعاملة؟')) return;
+
+        try {
+            const response = await fetch(`/api/finance/${id}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('✅ ' + result.message);
+                location.reload();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ حدث خطأ: ' + error.message);
+        }
+    }
+
+    document.getElementById('addFinanceForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const editId = document.getElementById('editId').value;
+        const data = {
+            date: document.getElementById('financeDate').value,
+            customer_id: document.getElementById('customerId').value,
+            transaction_type: document.getElementById('transactionType').value,
+            amount_paid: document.getElementById('amountPaid').value,
+            amount_received: document.getElementById('amountReceived').value,
+            notes: document.getElementById('notes').value
+        };
+
+        const url = editId ? `/api/finance/${editId}` : '/api/finance';
+        const method = editId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('✅ ' + result.message);
+                location.reload();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ حدث خطأ: ' + error.message);
+        }
+    });
+
+    loadCustomers();
+</script>
+{% endblock %}

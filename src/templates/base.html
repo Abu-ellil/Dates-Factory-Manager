@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Date Factory Manager{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2F75B5',
+                        secondary: '#FFC000',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .dark .gradient-bg {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-right: 4px solid white;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-4">
+                <h1 class="text-2xl font-bold">🌴 إدارة مصنع التمور</h1>
+                <div class="flex items-center gap-4">
+                    <button id="darkModeToggle" class="p-2 rounded hover:bg-white/10 transition">
+                        <!-- Sun Icon -->
+                        <svg id="sunIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                        </svg>
+                        <!-- Moon Icon -->
+                        <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <button id="menuToggle" class="md:hidden p-2 rounded hover:bg-white/10">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="navMenu" class="md:flex pb-4 hidden md:block">
+                <a href="/dashboard"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block {% if request.path == '/dashboard' %}active{% endif %}">
+                    📊 لوحة التحكم
+                </a>
+                <a href="/customers"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block {% if request.path == '/customers' %}active{% endif %}">
+                    👥 العملاء
+                </a>
+                <a href="/weighbridge"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block {% if request.path == '/weighbridge' %}active{% endif %}">
+                    ⚖️ الميزان
+                </a>
+                <a href="/crates"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block {% if request.path == '/crates' %}active{% endif %}">
+                    📦 الصناديق
+                </a>
+                <a href="/finance"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block {% if request.path == '/finance' %}active{% endif %}">
+                    💰 المالية
+                </a>
+                <a href="/reports"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block {% if request.path == '/reports' %}active{% endif %}">
+                    📈 التقارير
+                </a>
+                <a href="/export"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block bg-green-600 hover:bg-green-700 ml-2">
+                    📥 تصدير Excel
+                </a>
+                <a href="/settings"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block {% if request.path == '/settings' %}active{% endif %}">
+                    ⚙️ الإعدادات
+                </a>
+                <a href="/logout"
+                    class="nav-link block px-4 py-2 rounded mb-1 md:mb-0 md:inline-block bg-red-600 hover:bg-red-700 ml-2">
+                    🚪 خروج
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center py-4 mt-12 dark:bg-gray-950">
+        <p>© 2025 Date Factory Manager - جميع الحقوق محفوظة</p>
+    </footer>
+
+    <script>
+        // Dark Mode Logic
+        const toggleBtn = document.getElementById('darkModeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const html = document.documentElement;
+
+        // Check local storage
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            html.classList.remove('dark');
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            if (html.classList.contains('dark')) {
+                localStorage.setItem('darkMode', 'true');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                localStorage.setItem('darkMode', 'false');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        });
+
+        // Mobile menu toggle
+        document.getElementById('menuToggle')?.addEventListener('click', function () {
+            const menu = document.getElementById('navMenu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Auto-hide mobile menu on navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function () {
+                if (window.innerWidth < 768) {
+                    document.getElementById('navMenu').classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}الإعدادات - Date Factory Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">⚙️ الإعدادات</h2>
+
+    <!-- Daily Prices Section -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                </path>
+            </svg>
+            أسعار القنطار اليومية
+        </h3>
+
+        <form id="priceForm" class="flex gap-4 items-end mb-6">
+            <div class="flex-1">
+                <label class="block text-gray-700 font-semibold mb-2">التاريخ</label>
+                <input type="date" id="priceDate" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+            <div class="flex-1">
+                <label class="block text-gray-700 font-semibold mb-2">سعر القنطار (جنيه)</label>
+                <input type="number" step="0.01" id="priceValue" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+            <button type="submit"
+                class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-semibold transition h-[42px]">
+                حفظ السعر
+            </button>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-right">التاريخ</th>
+                        <th class="px-4 py-2 text-right">السعر</th>
+                        <th class="px-4 py-2 text-right">تاريخ التحديث</th>
+                    </tr>
+                </thead>
+                <tbody id="pricesTable" class="divide-y divide-gray-200">
+                    <!-- Prices will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Backup Section -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            النسخ الاحتياطي
+        </h3>
+
+        <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+            <div>
+                <p class="font-semibold text-blue-900">النسخ الاحتياطي اليدوي</p>
+                <p class="text-sm text-blue-700">اضغط لإنشاء نسخة احتياطية فورية ورفعها للسحابة.</p>
+            </div>
+            <button onclick="triggerBackup()" id="backupBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2">
+                <span>بدء النسخ</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set today's date
+    document.getElementById('priceDate').valueAsDate = new Date();
+
+    async function loadPrices() {
+        const response = await fetch('/api/settings/prices');
+        const prices = await response.json();
+
+        const tbody = document.getElementById('pricesTable');
+        tbody.innerHTML = '';
+
+        prices.forEach(p => {
+            const row = `
+                <tr>
+                    <td class="px-4 py-2">${p.date}</td>
+                    <td class="px-4 py-2 font-bold text-green-600">${p.price_per_qantar.toFixed(2)}</td>
+                    <td class="px-4 py-2 text-gray-500">${p.created_at}</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    document.getElementById('priceForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const data = {
+            date: document.getElementById('priceDate').value,
+            price: document.getElementById('priceValue').value
+        };
+
+        try {
+            const response = await fetch('/api/settings/prices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('✅ ' + result.message);
+                loadPrices();
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ حدث خطأ: ' + error.message);
+        }
+    });
+
+    async function triggerBackup() {
+        const btn = document.getElementById('backupBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin">⏳</span> جاري النسخ...';
+
+        try {
+            const response = await fetch('/api/settings/backup', { method: 'POST' });
+            const result = await response.json();
+
+            if (result.success) {
+                alert('✅ ' + result.message);
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ حدث خطأ: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    loadPrices();
+</script>
+{% endblock %}

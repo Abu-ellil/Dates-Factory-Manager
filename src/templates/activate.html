@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفعيل البرنامج - Date Factory Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #27ae60;
+            --bg: #f5f6fa;
+            --text: #2d3436;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .activation-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        p {
+            color: #636e72;
+            margin-bottom: 2rem;
+        }
+        
+        .machine-id-box {
+            background: #f1f2f6;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border: 2px dashed #bdc3c7;
+        }
+        
+        .machine-id-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .machine-id-value {
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            letter-spacing: 2px;
+            direction: ltr;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: right;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: monospace;
+            direction: ltr;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            background-color: #219150;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .alert-error {
+            background-color: #ffeaa7;
+            color: #d63031;
+            border: 1px solid #fab1a0;
+        }
+        
+        .contact-info {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #b2bec3;
+            border-top: 1px solid #dfe6e9;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="activation-card">
+        <div class="logo">🔒</div>
+        <h1>تفعيل البرنامج</h1>
+        <p>هذه النسخة تتطلب تفعيل. يرجى إرسال "رقم الجهاز" أدناه للحصول على مفتاح التفعيل.</p>
+        
+        {% if error %}
+        <div class="alert alert-error">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="machine-id-box">
+            <span class="machine-id-label">رقم الجهاز (Machine ID)</span>
+            <div class="machine-id-value" id="machineId">{{ machine_id }}</div>
+            <button onclick="copyMachineId()" style="margin-top: 10px; padding: 5px; font-size: 0.9rem; background: #95a5a6;">نسخ الرقم</button>
+        </div>
+        
+        <form method="POST" action="/activate">
+            <div class="form-group">
+                <label>مفتاح التفعيل (License Key)</label>
+                <input type="text" name="license_key" placeholder="أدخل مفتاح التفعيل هنا..." required autocomplete="off">
+            </div>
+            <button type="submit">تفعيل الآن</button>
+        </form>
+        
+        <div class="contact-info">
+            للحصول على مفتاح التفعيل، يرجى التواصل مع المطور.
+        </div>
+    </div>
+
+    <script>
+        function copyMachineId() {
+            const id = document.getElementById('machineId').innerText;
+            navigator.clipboard.writeText(id).then(() => {
+                alert('تم نسخ رقم الجهاز!');
+            });
+        }
+    </script>
+</body>
+</html>

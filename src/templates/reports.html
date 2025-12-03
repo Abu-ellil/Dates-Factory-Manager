@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}التقارير - Date Factory Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl font-bold text-gray-800">📈 التقارير المتقدمة</h2>
+        <button onclick="printReport()"
+            class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2-4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                </path>
+            </svg>
+            طباعة التقرير
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <form id="reportForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">من تاريخ</label>
+                <input type="date" id="startDate" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">إلى تاريخ</label>
+                <input type="date" id="endDate" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">العميل (اختياري)</label>
+                <select id="customerId"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">-- كل العملاء --</option>
+                </select>
+            </div>
+            <button type="submit"
+                class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-semibold transition h-[42px]">
+                عرض التقرير
+            </button>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-md border-r-4 border-blue-500">
+            <h3 class="text-gray-500 font-semibold mb-2">إجمالي الميزان</h3>
+            <p id="totalWeight" class="text-3xl font-bold text-gray-800">0.00 <span
+                    class="text-sm text-gray-500">كجم</span></p>
+            <p id="totalWeightValue" class="text-sm text-green-600 font-bold mt-1">0.00 جنيه</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border-r-4 border-green-500">
+            <h3 class="text-gray-500 font-semibold mb-2">المالية (مقبوضات)</h3>
+            <p id="totalReceived" class="text-3xl font-bold text-gray-800">0.00 <span
+                    class="text-sm text-gray-500">جنيه</span></p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border-r-4 border-red-500">
+            <h3 class="text-gray-500 font-semibold mb-2">المالية (مدفوعات)</h3>
+            <p id="totalPaid" class="text-3xl font-bold text-gray-800">0.00 <span
+                    class="text-sm text-gray-500">جنيه</span></p>
+        </div>
+    </div>
+
+    <!-- Detailed Results -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="border-b border-gray-200">
+            <nav class="flex -mb-px">
+                <button onclick="switchTab('weighbridge')" id="tab-weighbridge"
+                    class="tab-btn active w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm">
+                    الميزان
+                </button>
+                <button onclick="switchTab('finance')" id="tab-finance"
+                    class="tab-btn w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm">
+                    المالية
+                </button>
+                <button onclick="switchTab('crates')" id="tab-crates"
+                    class="tab-btn w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm">
+                    الصناديق
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-6">
+            <!-- Weighbridge Table -->
+            <div id="content-weighbridge" class="tab-content block">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-right">التاريخ</th>
+                            <th class="px-4 py-2 text-right">العميل</th>
+                            <th class="px-4 py-2 text-right">الوزن</th>
+                            <th class="px-4 py-2 text-right">السعر</th>
+                            <th class="px-4 py-2 text-right">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-weighbridge" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <!-- Finance Table -->
+            <div id="content-finance" class="tab-content hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-right">التاريخ</th>
+                            <th class="px-4 py-2 text-right">العميل</th>
+                            <th class="px-4 py-2 text-right">النوع</th>
+                            <th class="px-4 py-2 text-right">مدفوع</th>
+                            <th class="px-4 py-2 text-right">مقبوض</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-finance" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <!-- Crates Table -->
+            <div id="content-crates" class="tab-content hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-right">التاريخ</th>
+                            <th class="px-4 py-2 text-right">العميل</th>
+                            <th class="px-4 py-2 text-right">منصرف</th>
+                            <th class="px-4 py-2 text-right">مرتد</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-crates" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tab-btn.active {
+        border-color: #2F75B5;
+        color: #2F75B5;
+    }
+
+    .tab-btn:not(.active) {
+        border-color: transparent;
+        color: #6B7280;
+    }
+
+    .tab-btn:hover:not(.active) {
+        border-color: #D1D5DB;
+        color: #374151;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        .max-w-7xl,
+        .max-w-7xl * {
+            visibility: visible;
+        }
+
+        .max-w-7xl {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        button,
+        form {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set default dates (first day of current month to today)
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById('startDate').valueAsDate = firstDay;
+    document.getElementById('endDate').valueAsDate = today;
+
+    async function loadCustomers() {
+        const response = await fetch('/api/customers');
+        const customers = await response.json();
+        const select = document.getElementById('customerId');
+        customers.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c.id;
+            option.textContent = c.name;
+            select.appendChild(option);
+        });
+    }
+
+    function switchTab(tabName) {
+        // Hide all contents
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+
+        // Deactivate all tabs
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        // Show selected content
+        document.getElementById(`content-${tabName}`).classList.remove('hidden');
+        document.getElementById(`content-${tabName}`).classList.add('block');
+
+        // Activate selected tab
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    document.getElementById('reportForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const customerId = document.getElementById('customerId').value;
+
+        try {
+            const response = await fetch(`/api/reports?start=${startDate}&end=${endDate}&customer=${customerId}`);
+            const data = await response.json();
+
+            // Update Summary
+            document.getElementById('totalWeight').innerHTML = `${data.summary.total_weight.toFixed(2)} <span class="text-sm text-gray-500">كجم</span>`;
+            document.getElementById('totalWeightValue').textContent = `${data.summary.total_weight_value.toFixed(2)} جنيه`;
+            document.getElementById('totalReceived').innerHTML = `${data.summary.total_received.toFixed(2)} <span class="text-sm text-gray-500">جنيه</span>`;
+            document.getElementById('totalPaid').innerHTML = `${data.summary.total_paid.toFixed(2)} <span class="text-sm text-gray-500">جنيه</span>`;
+
+            // Update Tables
+            const wbTable = document.getElementById('table-weighbridge');
+            wbTable.innerHTML = data.weighbridge.map(r => `
+                <tr>
+                    <td class="px-4 py-2">${r.date}</td>
+                    <td class="px-4 py-2">${r.customer_name}</td>
+                    <td class="px-4 py-2 font-bold">${r.net_weight}</td>
+                    <td class="px-4 py-2">${r.price_per_qantar}</td>
+                    <td class="px-4 py-2 text-green-600">${r.total}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">لا توجد بيانات</td></tr>';
+
+            const finTable = document.getElementById('table-finance');
+            finTable.innerHTML = data.finance.map(r => `
+                <tr>
+                    <td class="px-4 py-2">${r.date}</td>
+                    <td class="px-4 py-2">${r.customer_name}</td>
+                    <td class="px-4 py-2 badge">${r.transaction_type}</td>
+                    <td class="px-4 py-2 text-red-600">${r.amount_paid}</td>
+                    <td class="px-4 py-2 text-green-600">${r.amount_received}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-500">لا توجد بيانات</td></tr>';
+
+            const crTable = document.getElementById('table-crates');
+            crTable.innerHTML = data.crates.map(r => `
+                <tr>
+                    <td class="px-4 py-2">${r.date}</td>
+                    <td class="px-4 py-2">${r.customer_name}</td>
+                    <td class="px-4 py-2 text-green-600">${r.crates_out}</td>
+                    <td class="px-4 py-2 text-red-600">${r.crates_returned}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="text-center py-4 text-gray-500">لا توجد بيانات</td></tr>';
+
+        } catch (error) {
+            alert('❌ حدث خطأ أثناء تحميل التقرير');
+            console.error(error);
+        }
+    });
+
+    loadCustomers();
+</script>
+{% endblock %}

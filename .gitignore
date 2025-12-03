@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Build and Dist
+build/
+dist/
+*.spec
+installer_output/
+*.exe
+
+# Database
+*.db
+date_factory.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Project specific
+backups/
+exports/
+innosetup_installer.exe

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}استيراد العملاء - Date Factory Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">📥 استيراد العملاء من Excel</h2>
+
+    <!-- Instructions Card -->
+    <div class="bg-blue-50 border-r-4 border-blue-500 p-6 mb-6 rounded-lg">
+        <h3 class="text-lg font-bold text-blue-900 mb-3">📋 تعليمات الاستيراد</h3>
+        <ul class="list-disc list-inside space-y-2 text-blue-800">
+            <li>يجب أن يكون الملف بصيغة Excel (.xlsx أو .xls)</li>
+            <li>يجب أن يحتوي على الأعمدة التالية: <strong>اسم العميل</strong>، <strong>النوع</strong>، <strong>رقم
+                    الهاتف</strong></li>
+            <li>أو بالإنجليزية: <strong>Name</strong>, <strong>Type</strong>, <strong>Phone</strong></li>
+            <li>العملاء المكررين سيتم تجاهلهم تلقائياً</li>
+        </ul>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form id="uploadForm" class="space-y-6">
+            <div
+                class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                    </path>
+                </svg>
+                <label for="fileInput" class="cursor-pointer">
+                    <span class="text-primary font-semibold hover:underline">اختر ملف Excel</span>
+                    <span class="text-gray-600"> أو اسحبه هنا</span>
+                </label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden" required>
+                <p id="fileName" class="mt-2 text-sm text-gray-500"></p>
+            </div>
+
+            <button type="submit" id="uploadBtn"
+                class="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-lg font-semibold text-lg transition flex items-center justify-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                استيراد العملاء
+            </button>
+        </form>
+
+        <!-- Progress -->
+        <div id="progress" class="hidden mt-6">
+            <div class="flex items-center justify-center gap-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span class="text-gray-700">جاري الاستيراد...</span>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden mt-6">
+            <div id="successMessage" class="hidden bg-green-50 border-r-4 border-green-500 p-4 rounded-lg mb-4">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-green-800 font-semibold" id="successText"></p>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="hidden bg-red-50 border-r-4 border-red-500 p-4 rounded-lg">
+                <div class="flex items-center gap-3 mb-2">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-red-800 font-semibold" id="errorText"></p>
+                </div>
+                <ul id="errorList" class="list-disc list-inside text-red-700 text-sm mr-9"></ul>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center">
+            <a href="/customers" class="text-primary hover:underline">← العودة إلى قائمة العملاء</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progress = document.getElementById('progress');
+    const results = document.getElementById('results');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+
+    fileInput.addEventListener('change', function () {
+        if (this.files.length > 0) {
+            fileName.textContent = this.files[0].name;
+        }
+    });
+
+    uploadForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        if (!fileInput.files.length) {
+            alert('الرجاء اختيار ملف');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        // Show progress
+        uploadBtn.disabled = true;
+        progress.classList.remove('hidden');
+        results.classList.add('hidden');
+        successMessage.classList.add('hidden');
+        errorMessage.classList.add('hidden');
+
+        try {
+            const response = await fetch('/import', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            // Hide progress
+            progress.classList.add('hidden');
+            results.classList.remove('hidden');
+
+            if (result.success) {
+                successMessage.classList.remove('hidden');
+                document.getElementById('successText').textContent = result.message;
+
+                if (result.error_count > 0) {
+                    errorMessage.classList.remove('hidden');
+                    document.getElementById('errorText').textContent = `تحذير: ${result.error_count} سطر بها أخطاء`;
+
+                    const errorList = document.getElementById('errorList');
+                    errorList.innerHTML = '';
+                    result.errors.forEach(error => {
+                        const li = document.createElement('li');
+                        li.textContent = error;
+                        errorList.appendChild(li);
+                    });
+                }
+
+                // Reset form after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/customers';
+                }, 3000);
+            } else {
+                errorMessage.classList.remove('hidden');
+                document.getElementById('errorText').textContent = result.message;
+            }
+
+        } catch (error) {
+            progress.classList.add('hidden');
+            results.classList.remove('hidden');
+            errorMessage.classList.remove('hidden');
+            document.getElementById('errorText').textContent = 'حدث خطأ: ' + error.message;
+        } finally {
+            uploadBtn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}
