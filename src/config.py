@@ -16,20 +16,24 @@ class Config:
         import secrets
         SECRET_KEY = secrets.token_urlsafe(32)
         print("WARNING: Using generated SECRET_KEY. Set SECRET_KEY environment variable in production!")
-    
+
     # Database Configuration
     DATABASE_PATH = os.environ.get('DATABASE_PATH', 'date_factory.db')
-    
+
+    # Flask Configuration
+    FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
+    DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
+
     # License Management
     LICENSE_SECRET_KEY = os.environ.get('LICENSE_SECRET_KEY')
     if not LICENSE_SECRET_KEY:
         # Use SECRET_KEY as fallback for license signing
         LICENSE_SECRET_KEY = SECRET_KEY
         print("WARNING: Using SECRET_KEY for license signing. Set LICENSE_SECRET_KEY in production!")
-    
-    # Flask Configuration
-    FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
-    DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
+        # For development, use a fixed key to avoid signature issues
+        if FLASK_ENV.lower() != 'production':
+            LICENSE_SECRET_KEY = "test_secret_key_12345"
+            print("INFO: Using fixed development license key")
     
     # Security Headers
     SECURITY_HEADERS = {

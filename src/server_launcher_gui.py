@@ -24,7 +24,7 @@ except ImportError:
 class ServerLauncherGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Date Factory Manager - Server Control")
+        self.root.title("مدير مصنع التمور - التحكم في الخادم")
         self.root.geometry("800x600")
         self.root.resizable(False, False)
 
@@ -68,7 +68,7 @@ class ServerLauncherGUI:
 
         title_label = tk.Label(
             header_frame,
-            text="🏭 Date Factory Manager",
+            text="🏭 مدير مصنع التمور",
             font=("Segoe UI", 24, "bold"),
             bg=self.highlight_color,
             fg=self.text_color
@@ -102,7 +102,7 @@ class ServerLauncherGUI:
         # Title
         title = tk.Label(
             parent,
-            text="🚀 Server Control",
+            text="🚀 التحكم في الخادم",
             font=("Segoe UI", 16, "bold"),
             bg=self.secondary_bg,
             fg=self.text_color
@@ -116,7 +116,7 @@ class ServerLauncherGUI:
         # Start Server Button
         self.start_btn = tk.Button(
             btn_frame,
-            text="▶️ Start Server",
+            text="▶️ تشغيل الخادم",
             command=self.start_server,
             bg=self.success_color,
             fg="#000000",
@@ -131,7 +131,7 @@ class ServerLauncherGUI:
         # Stop Server Button
         self.stop_btn = tk.Button(
             btn_frame,
-            text="⏹️ Stop Server",
+            text="⏹️ إيقاف الخادم",
             command=self.stop_server,
             bg=self.highlight_color,
             fg=self.text_color,
@@ -147,7 +147,7 @@ class ServerLauncherGUI:
         # Access Application Button
         self.access_btn = tk.Button(
             btn_frame,
-            text="🌐 Open App",
+            text="🌐 فتح التطبيق",
             command=self.open_application,
             bg=self.accent_color,
             fg=self.text_color,
@@ -163,7 +163,7 @@ class ServerLauncherGUI:
         # Quit Button
         quit_btn = tk.Button(
             btn_frame,
-            text="❌ Quit",
+            text="❌ خروج",
             command=self.quit_application,
             bg=self.warning_color,
             fg="#000000",
@@ -180,7 +180,7 @@ class ServerLauncherGUI:
         # Title
         title = tk.Label(
             parent,
-            text="📊 Server Status",
+            text="📊 حالة الخادم",
             font=("Segoe UI", 16, "bold"),
             bg=self.secondary_bg,
             fg=self.text_color
@@ -197,7 +197,7 @@ class ServerLauncherGUI:
 
         tk.Label(
             status_frame,
-            text="Server Status:",
+            text="حالة الخادم:",
             font=("Segoe UI", 12),
             bg=self.secondary_bg,
             fg=self.text_color,
@@ -206,7 +206,7 @@ class ServerLauncherGUI:
 
         self.status_label = tk.Label(
             status_frame,
-            text="❌ Stopped",
+            text="❌ متوقف",
             font=("Segoe UI", 12, "bold"),
             bg=self.secondary_bg,
             fg=self.highlight_color,
@@ -220,7 +220,7 @@ class ServerLauncherGUI:
 
         tk.Label(
             url_frame,
-            text="Server URL:",
+            text="رابط الخادم:",
             font=("Segoe UI", 12),
             bg=self.secondary_bg,
             fg=self.text_color,
@@ -243,7 +243,7 @@ class ServerLauncherGUI:
 
         tk.Label(
             mobile_frame,
-            text="Mobile Access:",
+            text="الدخول من الجوال:",
             font=("Segoe UI", 12),
             bg=self.secondary_bg,
             fg=self.text_color,
@@ -265,7 +265,7 @@ class ServerLauncherGUI:
         # Title
         title = tk.Label(
             parent,
-            text="📝 Server Logs",
+            text="📝 سجلات الخادم",
             font=("Segoe UI", 16, "bold"),
             bg=self.secondary_bg,
             fg=self.text_color
@@ -303,8 +303,8 @@ class ServerLauncherGUI:
         vsb.config(command=self.logs_text.yview)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.logs_text.insert(tk.END, "Welcome to Date Factory Manager Server Launcher!\n")
-        self.logs_text.insert(tk.END, "Click 'Start Server' to launch the application.\n\n")
+        self.logs_text.insert(tk.END, "مرحباً بكم في مشغل خادم مدير مصنع التمور!\n")
+        self.logs_text.insert(tk.END, "اضغط على 'تشغيل الخادم' لبدء التطبيق.\n\n")
         self.logs_text.config(state=tk.DISABLED)
 
     def log_message(self, message):
@@ -351,7 +351,7 @@ class ServerLauncherGUI:
     def update_ui_status(self):
         """Update UI based on server status"""
         if self.is_server_running:
-            self.status_label.config(text="✅ Running", fg=self.success_color)
+            self.status_label.config(text="✅ يعمل", fg=self.success_color)
             self.start_btn.config(state=tk.DISABLED, bg=self.secondary_bg, fg=self.text_color)
             self.stop_btn.config(state=tk.NORMAL)
             self.access_btn.config(state=tk.NORMAL)
@@ -360,7 +360,7 @@ class ServerLauncherGUI:
             local_ip = self.get_local_ip()
             self.mobile_label.config(text=f"http://{local_ip}:5000")
         else:
-            self.status_label.config(text="❌ Stopped", fg=self.highlight_color)
+            self.status_label.config(text="❌ متوقف", fg=self.highlight_color)
             self.start_btn.config(state=tk.NORMAL, bg=self.success_color, fg="#000000")
             self.stop_btn.config(state=tk.DISABLED)
             self.access_btn.config(state=tk.DISABLED)
@@ -369,10 +369,10 @@ class ServerLauncherGUI:
     def start_server(self):
         """Start the Flask server"""
         if self.is_server_running:
-            messagebox.showwarning("Warning", "Server is already running!")
+            messagebox.showwarning("تنبيه", "الخادم يعمل بالفعل!")
             return
 
-        self.log_message("Starting Date Factory Manager server...")
+        self.log_message("جاري تشغيل خادم مدير مصنع التمور...")
 
         try:
             # Determine command to run based on execution mode
@@ -398,31 +398,31 @@ class ServerLauncherGUI:
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
             )
 
-            self.log_message("Server process started successfully")
-            self.log_message("Waiting for server to initialize...")
+            self.log_message("تم بدء عملية الخادم بنجاح")
+            self.log_message("جاري انتظار تهيئة الخادم...")
 
             # Wait a moment for server to start
             time.sleep(3)
             self.check_server_status()
 
             if self.is_server_running:
-                self.log_message("Server is now running and ready!")
-                self.log_message("You can now open the application in your browser.")
+                self.log_message("الخادم يعمل الآن وجاهز!")
+                self.log_message("يمكنك الآن فتح التطبيق في المتصفح.")
             else:
-                self.log_message("Warning: Server may not have started properly")
+                self.log_message("تحذير: ربما لم يبدأ الخادم بشكل صحيح")
                 # Don't kill process yet, give it more time
 
         except Exception as e:
-            self.log_message(f"Error starting server: {str(e)}")
-            messagebox.showerror("Error", f"Failed to start server:\n{str(e)}")
+            self.log_message(f"خطأ في تشغيل الخادم: {str(e)}")
+            messagebox.showerror("خطأ", f"فشل تشغيل الخادم:\n{str(e)}")
 
     def stop_server(self):
         """Stop the Flask server"""
         if not self.is_server_running:
-            messagebox.showwarning("Warning", "Server is not running!")
+            messagebox.showwarning("تنبيه", "الخادم لا يعمل!")
             return
 
-        self.log_message("Stopping server...")
+        self.log_message("جاري إيقاف الخادم...")
 
         try:
             if os.name == 'nt':  # Windows
@@ -441,15 +441,15 @@ class ServerLauncherGUI:
                             try:
                                 # Force kill the process
                                 subprocess.run(['taskkill', '/PID', pid, '/F'], check=True, timeout=10)
-                                self.log_message(f"Successfully terminated process {pid}")
+                                self.log_message(f"تم إنهاء العملية {pid} بنجاح")
                                 break
                             except subprocess.CalledProcessError as e:
-                                self.log_message(f"Failed to kill process {pid}: {e}")
+                                self.log_message(f"فشل إنهاء العملية {pid}: {e}")
 
                 # Also try to terminate our stored process if available
                 if self.server_process and self.server_process.poll() is None:
                     self.server_process.kill()
-                    self.log_message("Force-killed stored process")
+                    self.log_message("تم إنهاء العملية المخزنة بالقوة")
 
             else:  # Unix-like systems
                 if self.server_process and self.server_process.poll() is None:
@@ -458,39 +458,39 @@ class ServerLauncherGUI:
                     time.sleep(2)
                     if self.server_process.poll() is None:
                         self.server_process.kill()
-                        self.log_message("Server force-killed")
+                        self.log_message("تم إنهاء الخادم بالقوة")
 
             self.server_process = None
-            self.log_message("Server stopped successfully")
+            self.log_message("تم إيقاف الخادم بنجاح")
 
             # Update status
             time.sleep(1)
             self.check_server_status()
 
         except Exception as e:
-            self.log_message(f"Error stopping server: {str(e)}")
-            messagebox.showerror("Error", f"Failed to stop server:\n{str(e)}")
+            self.log_message(f"خطأ في إيقاف الخادم: {str(e)}")
+            messagebox.showerror("خطأ", f"فشل إيقاف الخادم:\n{str(e)}")
 
     def open_application(self):
         """Open the application in browser"""
         if not self.is_server_running:
-            messagebox.showwarning("Warning", "Server is not running!")
+            messagebox.showwarning("تنبيه", "الخادم لا يعمل!")
             return
 
         try:
             webbrowser.open("http://localhost:5000")
-            self.log_message("Opened application in default browser")
+            self.log_message("تم فتح التطبيق في المتصفح الافتراضي")
         except Exception as e:
-            self.log_message(f"Error opening browser: {str(e)}")
+            self.log_message(f"خطأ في فتح المتصفح: {str(e)}")
 
     def quit_application(self):
         """Quit the application"""
         if self.is_server_running:
-            if messagebox.askyesno("Confirm Quit",
-                "The server is still running. Stop it before quitting?"):
+            if messagebox.askyesno("تأكيد الخروج",
+                "الخادم لا يزال يعمل. هل تريد إيقافه قبل الخروج؟"):
                 self.stop_server()
 
-        self.log_message("Goodbye!")
+        self.log_message("مع السلامة!")
         self.root.quit()
         self.root.destroy()
 
