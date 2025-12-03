@@ -6,3 +6,4 @@ pyinstaller==6.17.0
 openpyxl==3.1.2
 Flask-Login==0.6.3
 Pillow
+pystray==0.19.5

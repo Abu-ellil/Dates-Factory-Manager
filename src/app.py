@@ -589,6 +589,55 @@ def export_excel():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/restore', methods=['GET'])
+@login_required
+def restore_page():
+    """Restore data page"""
+    return render_template('restore.html')
+
+@app.route('/api/restore', methods=['POST'])
+@login_required
+def api_restore():
+    """Handle data restoration from Excel file"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'لم يتم اختيار ملف'}), 400
+    
+    file = request.files['file']
+    mode = request.form.get('mode', 'merge')
+    
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'لم يتم اختيار ملف'}), 400
+    
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        return jsonify({'success': False, 'message': 'يجب أن يكون الملف بصيغة Excel (.xlsx أو .xls)'}), 400
+    
+    try:
+        # Save file temporarily
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            file.save(tmp.name)
+            tmp_path = tmp.name
+        
+        # Restore from file
+        from restore_data import restore_from_excel
+        stats = restore_from_excel(tmp_path, mode)
+        
+        # Clean up temp file
+        os.remove(tmp_path)
+        
+        if 'error' in stats:
+            return jsonify({'success': False, 'message': stats['error']}), 500
+        
+        return jsonify({
+            'success': True,
+            'message': 'تمت استعادة البيانات بنجاح',
+            'stats': stats
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 if __name__ == '__main__':
     import webbrowser
     import threading

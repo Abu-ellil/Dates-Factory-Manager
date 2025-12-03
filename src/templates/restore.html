@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}استعادة البيانات - Date Factory Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-database"></i>
+                        استعادة البيانات من ملف Excel
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Warning Alert -->
+                    <div class="alert alert-warning" role="alert">
+                        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> تحذير مهم</h5>
+                        <p>يمكنك استعادة البيانات من ملفات Excel التي تم تصديرها من هذا التطبيق أو من النسخ الاحتياطية.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>وضع الدمج:</strong> يضيف البيانات الجديدة دون حذف البيانات الموجودة<br>
+                            <strong>وضع الاستبدال:</strong> يحذف جميع البيانات الحالية ويستبدلها بالبيانات من الملف
+                        </p>
+                    </div>
+
+                    <!-- Upload Form -->
+                    <form id="restoreForm" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="excelFile" class="form-label">اختر ملف Excel</label>
+                                    <input type="file" class="form-control" id="excelFile" name="file" 
+                                           accept=".xlsx,.xls" required>
+                                    <div class="form-text">الملفات المدعومة: .xlsx, .xls</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="restoreMode" class="form-label">وضع الاستعادة</label>
+                                    <select class="form-select" id="restoreMode" name="mode">
+                                        <option value="merge">دمج (إضافة البيانات الجديدة)</option>
+                                        <option value="replace">استبدال (حذف واستعادة)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confirmation for Replace Mode -->
+                        <div id="replaceConfirmation" class="alert alert-danger d-none" role="alert">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmReplace">
+                                <label class="form-check-label" for="confirmReplace">
+                                    <strong>أؤكد أنني أريد حذف جميع البيانات الحالية واستبدالها</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                            <button type="submit" class="btn btn-primary btn-lg" id="restoreBtn">
+                                <i class="fas fa-upload"></i> استعادة البيانات
+                            </button>
+                            <a href="{{ url_for('settings') }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> إلغاء
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Progress Section -->
+                    <div id="progressSection" class="mt-4 d-none">
+                        <div class="progress" style="height: 30px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%">0%</div>
+                        </div>
+                        <p class="text-center mt-2" id="progressText">جاري معالجة البيانات...</p>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="resultsSection" class="mt-4 d-none">
+                        <div class="alert alert-success" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-check-circle"></i> تمت الاستعادة بنجاح!</h5>
+                            <hr>
+                            <div id="resultsContent"></div>
+                        </div>
+                    </div>
+
+                    <!-- Errors Section -->
+                    <div id="errorsSection" class="mt-4 d-none">
+                        <div class="alert alert-danger" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-exclamation-circle"></i> حدثت أخطاء</h5>
+                            <hr>
+                            <div id="errorsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> معلومات مهمة</h5>
+                </div>
+                <div class="card-body">
+                    <h6>متى تستخدم استعادة البيانات؟</h6>
+                    <ul>
+                        <li>عند نقل البيانات إلى جهاز جديد</li>
+                        <li>عند استعادة نسخة احتياطية قديمة</li>
+                        <li>عند دمج بيانات من ملفات متعددة</li>
+                        <li>عند إصلاح البيانات بعد خطأ</li>
+                    </ul>
+
+                    <h6 class="mt-3">نصائح:</h6>
+                    <ul>
+                        <li>تأكد من أن الملف بتنسيق Excel الصحيح (.xlsx أو .xls)</li>
+                        <li>استخدم وضع "الدمج" إذا كنت تريد الاحتفاظ بالبيانات الحالية</li>
+                        <li>قم بعمل نسخة احتياطية قبل استخدام وضع "الاستبدال"</li>
+                        <li>تأكد من أن أسماء العملاء في الملف مطابقة تماماً</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('restoreForm');
+    const modeSelect = document.getElementById('restoreMode');
+    const replaceConfirmation = document.getElementById('replaceConfirmation');
+    const confirmCheckbox = document.getElementById('confirmReplace');
+    const restoreBtn = document.getElementById('restoreBtn');
+    const progressSection = document.getElementById('progressSection');
+    const resultsSection = document.getElementById('resultsSection');
+    const errorsSection = document.getElementById('errorsSection');
+
+    // Show/hide confirmation based on mode
+    modeSelect.addEventListener('change', function() {
+        if (this.value === 'replace') {
+            replaceConfirmation.classList.remove('d-none');
+        } else {
+            replaceConfirmation.classList.add('d-none');
+            confirmCheckbox.checked = false;
+        }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validate replace mode confirmation
+        if (modeSelect.value === 'replace' && !confirmCheckbox.checked) {
+            alert('يجب تأكيد حذف البيانات الحالية');
+            return;
+        }
+
+        // Hide previous results
+        resultsSection.classList.add('d-none');
+        errorsSection.classList.add('d-none');
+
+        // Show progress
+        progressSection.classList.remove('d-none');
+        restoreBtn.disabled = true;
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/api/restore', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            progressSection.classList.add('d-none');
+            restoreBtn.disabled = false;
+
+            if (result.success) {
+                // Show results
+                resultsSection.classList.remove('d-none');
+                document.getElementById('resultsContent').innerHTML = `
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3 class="text-primary">${result.stats.customers.added}</h3>
+                            <p>عملاء تمت إضافتهم</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-success">${result.stats.weighbridge.added}</h3>
+                            <p>معاملات الميزان</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-info">${result.stats.crates.added}</h3>
+                            <p>معاملات الصناديق</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-warning">${result.stats.finance.added}</h3>
+                            <p>المعاملات المالية</p>
+                        </div>
+                    </div>
+                    ${result.stats.customers.skipped > 0 ? `<p class="mt-3">تم تخطي ${result.stats.customers.skipped} عميل موجود بالفعل</p>` : ''}
+                `;
+
+                // Check for errors
+                const hasErrors = Object.values(result.stats).some(s => s.errors && s.errors.length > 0);
+                if (hasErrors) {
+                    errorsSection.classList.remove('d-none');
+                    let errorsHtml = '<ul>';
+                    for (const [category, data] of Object.entries(result.stats)) {
+                        if (data.errors && data.errors.length > 0) {
+                            errorsHtml += `<li><strong>${category}:</strong><ul>`;
+                            data.errors.slice(0, 5).forEach(error => {
+                                errorsHtml += `<li>${error}</li>`;
+                            });
+                            if (data.errors.length > 5) {
+                                errorsHtml += `<li>... و ${data.errors.length - 5} أخطاء أخرى</li>`;
+                            }
+                            errorsHtml += '</ul></li>';
+                        }
+                    }
+                    errorsHtml += '</ul>';
+                    document.getElementById('errorsContent').innerHTML = errorsHtml;
+                }
+
+                // Reset form
+                form.reset();
+                replaceConfirmation.classList.add('d-none');
+            } else {
+                errorsSection.classList.remove('d-none');
+                document.getElementById('errorsContent').innerHTML = `<p>${result.message}</p>`;
+            }
+        } catch (error) {
+            progressSection.classList.add('d-none');
+            restoreBtn.disabled = false;
+            errorsSection.classList.remove('d-none');
+            document.getElementById('errorsContent').innerHTML = `<p>حدث خطأ: ${error.message}</p>`;
+        }
+    });
+});
+</script>
+
+<style>
+.alert-heading {
+    font-weight: bold;
+}
+
+#progressSection {
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.card {
+    border-radius: 10px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+</style>
+{% endblock %}

@@ -2,6 +2,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import os
 from export import export_to_excel
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 def create_backup():
     """Create daily backup of database as Excel file"""
