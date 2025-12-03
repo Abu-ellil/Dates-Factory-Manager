@@ -176,16 +176,16 @@ def build_portable_app():
     """Build the portable application using PyInstaller"""
     print_step("Building portable application with PyInstaller...")
     
-    # Check if app.spec exists
-    if not os.path.exists("app.spec"):
-        print_error("app.spec not found!")
+    # Check if gui_launcher.spec exists
+    if not os.path.exists("gui_launcher.spec"):
+        print_error("gui_launcher.spec not found!")
         return False
     
     print_info("This may take several minutes...")
     
     # Run PyInstaller
     result = subprocess.run(
-        [sys.executable, "-m", "PyInstaller", "--clean", "--noconfirm", "app.spec"],
+        [sys.executable, "-m", "PyInstaller", "--clean", "--noconfirm", "gui_launcher.spec"],
         capture_output=False  # Show output in real-time
     )
     

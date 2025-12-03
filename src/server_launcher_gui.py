@@ -375,19 +375,26 @@ class ServerLauncherGUI:
         self.log_message("Starting Date Factory Manager server...")
 
         try:
-            # Get the server_only.py path (runs without browser/console output)
-            server_path = os.path.join(os.path.dirname(__file__), 'server_only.py')
-
-            if not os.path.exists(server_path):
-                # Fallback to app.py if server_only.py doesn't exist
-                server_path = os.path.join(os.path.dirname(__file__), 'app.py')
+            # Determine command to run based on execution mode
+            if getattr(sys, 'frozen', False):
+                # Running as compiled executable - use flag to start server mode
+                cmd = [sys.executable, '--server']
+                cwd = os.path.dirname(sys.executable)
+            else:
+                # Running as script - run server_only.py directly
+                server_path = os.path.join(os.path.dirname(__file__), 'server_only.py')
+                if not os.path.exists(server_path):
+                    server_path = os.path.join(os.path.dirname(__file__), 'app.py')
+                
+                cmd = [sys.executable, server_path]
+                cwd = os.path.dirname(server_path)
 
             # Start server process
             self.server_process = subprocess.Popen(
-                [sys.executable, server_path],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                cwd=os.path.dirname(server_path),
+                cwd=cwd,
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
             )
 
@@ -493,6 +500,24 @@ class ServerLauncherGUI:
 
 def main():
     """Main entry point"""
+    # Check for server mode flag
+    if len(sys.argv) > 1 and sys.argv[1] == '--server':
+        # Server mode - run Flask app without GUI
+        try:
+            # Monkey patch webbrowser to prevent browser opening
+            import webbrowser
+            webbrowser.open = lambda *args, **kwargs: None
+            
+            # Import and run app
+            from app import app
+            app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+        except Exception as e:
+            # If something goes wrong, write to a log file since we have no console
+            with open('server_error.log', 'w') as f:
+                f.write(str(e))
+        return
+
+    # GUI mode
     # Change to the src directory
     if getattr(sys, 'frozen', False):
         # Running as compiled executable
