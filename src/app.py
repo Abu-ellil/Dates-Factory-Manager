@@ -607,6 +607,7 @@ def import_data():
     try:
         # Save file temporarily
         import tempfile
+        tmp_path = None
         with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
             file.save(tmp.name)
             tmp_path = tmp.name
@@ -619,17 +620,14 @@ def import_data():
         
         stats = restore_from_excel(tmp_path, mode)
         
-        # Clean up temp file
-        os.remove(tmp_path)
-        
         if 'error' in stats:
             return jsonify({'success': False, 'message': stats['error']}), 500
             
         # Calculate total added
         total_added = (
-            stats['customers']['added'] + 
-            stats['weighbridge']['added'] + 
-            stats['crates']['added'] + 
+            stats['customers']['added'] +
+            stats['weighbridge']['added'] +
+            stats['crates']['added'] +
             stats['finance']['added']
         )
         
@@ -653,6 +651,13 @@ def import_data():
         
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        # Ensure temp file is cleaned up in all cases
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception as e:
+                print(f"Warning: Could not clean up temporary file {tmp_path}: {str(e)}")
 
 @app.route('/export')
 @login_required

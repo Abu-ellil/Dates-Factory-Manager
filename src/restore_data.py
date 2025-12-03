@@ -20,6 +20,7 @@ def restore_from_excel(file_path, mode='merge'):
         'finance': {'added': 0, 'skipped': 0, 'errors': []}
     }
     
+    workbook = None
     try:
         workbook = openpyxl.load_workbook(file_path)
         
@@ -28,7 +29,6 @@ def restore_from_excel(file_path, mode='merge'):
         has_valid_sheets = any(sheet in workbook.sheetnames for sheet in valid_sheets)
         
         if not has_valid_sheets:
-            workbook.close()
             return {'error': 'الملف لا يحتوي على أوراق عمل صالحة (العملاء، الميزان، الصناديق، المالية)'}
             
         conn = get_connection()
@@ -48,6 +48,7 @@ def restore_from_excel(file_path, mode='merge'):
         # 1. Restore Customers
         if 'العملاء (Customers)' in workbook.sheetnames:
             sheet = workbook['العملاء (Customers)']
+            # Process the sheet and immediately clear the reference
             for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
                 try:
                     if not row or not row[1]:  # Skip empty rows
@@ -74,11 +75,14 @@ def restore_from_excel(file_path, mode='merge'):
                 except Exception as e:
                     stats['customers']['errors'].append(f"Row {row_idx}: {str(e)}")
             
+            # Delete the sheet reference to avoid keeping workbook open
+            del sheet
             conn.commit()
         
         # 2. Restore Weighbridge
         if 'الميزان (Weighbridge)' in workbook.sheetnames:
             sheet = workbook['الميزان (Weighbridge)']
+            # Process the sheet and immediately clear the reference
             for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
                 try:
                     if not row or not row[0]:
@@ -117,11 +121,14 @@ def restore_from_excel(file_path, mode='merge'):
                 except Exception as e:
                     stats['weighbridge']['errors'].append(f"Row {row_idx}: {str(e)}")
             
+            # Delete the sheet reference to avoid keeping workbook open
+            del sheet
             conn.commit()
         
         # 3. Restore Crates
         if 'الصناديق (Crates)' in workbook.sheetnames:
             sheet = workbook['الصناديق (Crates)']
+            # Process the sheet and immediately clear the reference
             for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
                 try:
                     if not row or not row[0]:
@@ -153,7 +160,7 @@ def restore_from_excel(file_path, mode='merge'):
                     
                     cursor.execute('''
                         INSERT INTO crates (date, customer_id, crates_out, crates_returned, handler, notes)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?)
                     ''', (date, customer_id, crates_out, crates_returned, handler, notes))
                     
                     stats['crates']['added'] += 1
@@ -161,11 +168,14 @@ def restore_from_excel(file_path, mode='merge'):
                 except Exception as e:
                     stats['crates']['errors'].append(f"Row {row_idx}: {str(e)}")
             
+            # Delete the sheet reference to avoid keeping workbook open
+            del sheet
             conn.commit()
         
         # 4. Restore Finance
         if 'المالية (Finance)' in workbook.sheetnames:
             sheet = workbook['المالية (Finance)']
+            # Process the sheet and immediately clear the reference
             for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
                 try:
                     if not row or not row[0]:
@@ -205,20 +215,23 @@ def restore_from_excel(file_path, mode='merge'):
                 except Exception as e:
                     stats['finance']['errors'].append(f"Row {row_idx}: {str(e)}")
             
+            # Delete the sheet reference to avoid keeping workbook open
+            del sheet
             conn.commit()
         
         conn.close()
-        workbook.close()
         
         return stats
         
     except Exception as e:
-        # Ensure workbook is closed in case of exception
-        try:
-            workbook.close()
-        except:
-            pass  # Workbook might not be initialized if the exception occurred during loading
         return {'error': str(e)}
+    finally:
+        # Ensure workbook is closed in all cases
+        if workbook is not None:
+            try:
+                workbook.close()
+            except:
+                pass  # Already closed or other issue
 
 if __name__ == '__main__':
     import sys

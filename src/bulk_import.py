@@ -9,6 +9,7 @@ def import_customers_from_excel(file_path):
     
     Returns: (success_count, error_count, errors_list)
     """
+    workbook = None
     try:
         workbook = openpyxl.load_workbook(file_path)
         sheet = workbook.active
@@ -86,6 +87,9 @@ def import_customers_from_excel(file_path):
                 errors.append(f"Row {row_idx}: {str(e)}")
                 error_count += 1
         
+        # Delete the sheet reference to avoid keeping workbook open
+        del sheet
+        
         conn.commit()
         conn.close()
         
@@ -93,6 +97,13 @@ def import_customers_from_excel(file_path):
         
     except Exception as e:
         return 0, 0, [f"Error reading file: {str(e)}"]
+    finally:
+        # Ensure workbook is closed in all cases
+        if workbook is not None:
+            try:
+                workbook.close()
+            except:
+                pass  # Already closed or other issue
 
 if __name__ == '__main__':
     # Test import
