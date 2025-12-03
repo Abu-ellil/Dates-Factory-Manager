@@ -22,6 +22,14 @@ def restore_from_excel(file_path, mode='merge'):
     
     try:
         workbook = openpyxl.load_workbook(file_path)
+        
+        # Check if file has any valid sheets
+        valid_sheets = ['العملاء (Customers)', 'الميزان (Weighbridge)', 'الصناديق (Crates)', 'المالية (Finance)']
+        has_valid_sheets = any(sheet in workbook.sheetnames for sheet in valid_sheets)
+        
+        if not has_valid_sheets:
+            return {'error': 'الملف لا يحتوي على أوراق عمل صالحة (العملاء، الميزان، الصناديق، المالية)'}
+            
         conn = get_connection()
         cursor = conn.cursor()
         

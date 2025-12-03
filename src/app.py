@@ -587,8 +587,8 @@ def api_reports():
 
 @app.route('/import', methods=['GET', 'POST'])
 @login_required
-def import_customers():
-    """Import customers from Excel file"""
+def import_data():
+    """Import data from Excel file"""
     if request.method == 'GET':
         return render_template('import.html')
     
@@ -611,19 +611,44 @@ def import_customers():
             file.save(tmp.name)
             tmp_path = tmp.name
         
-        # Import from file
-        from bulk_import import import_customers_from_excel
-        success_count, error_count, errors = import_customers_from_excel(tmp_path)
+        # Import from file using restore_data
+        from restore_data import restore_from_excel
+        
+        # Default mode is merge, could be added as a form field later
+        mode = request.form.get('mode', 'merge')
+        
+        stats = restore_from_excel(tmp_path, mode)
         
         # Clean up temp file
         os.remove(tmp_path)
         
+        if 'error' in stats:
+            return jsonify({'success': False, 'message': stats['error']}), 500
+            
+        # Calculate total added
+        total_added = (
+            stats['customers']['added'] + 
+            stats['weighbridge']['added'] + 
+            stats['crates']['added'] + 
+            stats['finance']['added']
+        )
+        
+        # Collect all errors
+        all_errors = []
+        for category in ['customers', 'weighbridge', 'crates', 'finance']:
+            if stats[category]['errors']:
+                for err in stats[category]['errors']:
+                    all_errors.append(f"{category}: {err}")
+        
+        message = f'تم استيراد البيانات بنجاح (تم إضافة {total_added} سجل)'
+        if total_added == 0:
+            message = 'تمت العملية ولكن لم يتم إضافة أي بيانات جديدة. تأكد من أن الملف يحتوي على بيانات.'
+
         return jsonify({
             'success': True,
-            'message': f'تم استيراد {success_count} عميل بنجاح',
-            'success_count': success_count,
-            'error_count': error_count,
-            'errors': errors[:10]  # Return first 10 errors only
+            'message': message,
+            'stats': stats,
+            'errors': all_errors[:20]  # Return first 20 errors
         })
         
     except Exception as e:

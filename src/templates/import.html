@@ -1,28 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}استيراد العملاء - Date Factory Manager{% endblock %}
+{% block title %}استيراد البيانات - Date Factory Manager{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">📥 استيراد العملاء من Excel</h2>
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">📥 استيراد البيانات من Excel</h2>
 
     <!-- Instructions Card -->
     <div class="bg-blue-50 border-r-4 border-blue-500 p-6 mb-6 rounded-lg">
         <h3 class="text-lg font-bold text-blue-900 mb-3">📋 تعليمات الاستيراد</h3>
         <ul class="list-disc list-inside space-y-2 text-blue-800">
             <li>يجب أن يكون الملف بصيغة Excel (.xlsx أو .xls)</li>
-            <li>يجب أن يحتوي على الأعمدة التالية: <strong>اسم العميل</strong>، <strong>النوع</strong>، <strong>رقم
-                    الهاتف</strong></li>
-            <li>أو بالإنجليزية: <strong>Name</strong>, <strong>Type</strong>, <strong>Phone</strong></li>
-            <li>العملاء المكررين سيتم تجاهلهم تلقائياً</li>
+            <li>يمكنك استيراد ملف تم تصديره مسبقاً من البرنامج</li>
+            <li>سيتم استيراد البيانات التالية: <strong>العملاء، الميزان، الصناديق، المالية</strong></li>
+            <li>تأكد من تطابق أسماء العملاء لربط المعاملات بشكل صحيح</li>
         </ul>
     </div>
 
     <!-- Upload Form -->
     <div class="bg-white rounded-lg shadow-md p-8">
         <form id="uploadForm" class="space-y-6">
-            <div
-                class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition">
+            
+            <!-- Mode Selection -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 hover:border-primary transition has-[:checked]:border-primary has-[:checked]:bg-blue-50">
+                    <input type="radio" name="mode" value="merge" class="hidden" checked>
+                    <div class="flex items-center gap-3">
+                        <div class="w-5 h-5 rounded-full border-2 border-gray-400 flex items-center justify-center radio-indicator">
+                            <div class="w-2.5 h-2.5 rounded-full bg-primary hidden"></div>
+                        </div>
+                        <div>
+                            <span class="block font-bold text-gray-800">دمج البيانات (Merge)</span>
+                            <span class="text-sm text-gray-500">إضافة البيانات الجديدة مع الاحتفاظ بالحالية</span>
+                        </div>
+                    </div>
+                </label>
+                
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 hover:border-red-500 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+                    <input type="radio" name="mode" value="replace" class="hidden">
+                    <div class="flex items-center gap-3">
+                        <div class="w-5 h-5 rounded-full border-2 border-gray-400 flex items-center justify-center radio-indicator">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-500 hidden"></div>
+                        </div>
+                        <div>
+                            <span class="block font-bold text-gray-800">استبدال الكل (Replace)</span>
+                            <span class="text-sm text-gray-500">حذف جميع البيانات الحالية واستبدالها</span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
@@ -42,7 +70,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                 </svg>
-                استيراد العملاء
+                بدء الاستيراد
             </button>
         </form>
 
@@ -50,19 +78,39 @@
         <div id="progress" class="hidden mt-6">
             <div class="flex items-center justify-center gap-3">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span class="text-gray-700">جاري الاستيراد...</span>
+                <span class="text-gray-700">جاري استيراد البيانات...</span>
             </div>
         </div>
 
         <!-- Results -->
-        <div id="results" class="hidden mt-6">
-            <div id="successMessage" class="hidden bg-green-50 border-r-4 border-green-500 p-4 rounded-lg mb-4">
-                <div class="flex items-center gap-3">
+        <div id="results" class="hidden mt-6 space-y-4">
+            <div id="successMessage" class="hidden bg-green-50 border-r-4 border-green-500 p-4 rounded-lg">
+                <div class="flex items-center gap-3 mb-3">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <p class="text-green-800 font-semibold" id="successText"></p>
+                </div>
+                
+                <!-- Detailed Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div class="bg-white p-3 rounded shadow-sm text-center">
+                        <div class="text-sm text-gray-500">العملاء</div>
+                        <div class="font-bold text-lg text-primary" id="statsCustomers">0</div>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm text-center">
+                        <div class="text-sm text-gray-500">الميزان</div>
+                        <div class="font-bold text-lg text-primary" id="statsWeighbridge">0</div>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm text-center">
+                        <div class="text-sm text-gray-500">الصناديق</div>
+                        <div class="font-bold text-lg text-primary" id="statsCrates">0</div>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm text-center">
+                        <div class="text-sm text-gray-500">المالية</div>
+                        <div class="font-bold text-lg text-primary" id="statsFinance">0</div>
+                    </div>
                 </div>
             </div>
 
@@ -74,12 +122,12 @@
                     </svg>
                     <p class="text-red-800 font-semibold" id="errorText"></p>
                 </div>
-                <ul id="errorList" class="list-disc list-inside text-red-700 text-sm mr-9"></ul>
+                <ul id="errorList" class="list-disc list-inside text-red-700 text-sm mr-9 max-h-40 overflow-y-auto"></ul>
             </div>
         </div>
 
         <div class="mt-6 text-center">
-            <a href="/customers" class="text-primary hover:underline">← العودة إلى قائمة العملاء</a>
+            <a href="/dashboard" class="text-primary hover:underline">← العودة إلى لوحة التحكم</a>
         </div>
     </div>
 </div>
@@ -96,6 +144,22 @@
     const successMessage = document.getElementById('successMessage');
     const errorMessage = document.getElementById('errorMessage');
 
+    // Radio button styling logic
+    document.querySelectorAll('input[name="mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Update UI for all radios
+            document.querySelectorAll('.radio-indicator div').forEach(div => div.classList.add('hidden'));
+            
+            // Show indicator for checked
+            if(this.checked) {
+                this.parentElement.querySelector('.radio-indicator div').classList.remove('hidden');
+            }
+        });
+    });
+
+    // Initialize radio state
+    document.querySelector('input[name="mode"]:checked').parentElement.querySelector('.radio-indicator div').classList.remove('hidden');
+
     fileInput.addEventListener('change', function () {
         if (this.files.length > 0) {
             fileName.textContent = this.files[0].name;
@@ -109,9 +173,18 @@
             alert('الرجاء اختيار ملف');
             return;
         }
+        
+        // Confirm replace mode
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        if (mode === 'replace') {
+            if (!confirm('تحذير: سيتم حذف جميع البيانات الحالية واستبدالها بالبيانات الموجودة في الملف.\nهل أنت متأكد من المتابعة؟')) {
+                return;
+            }
+        }
 
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
+        formData.append('mode', mode);
 
         // Show progress
         uploadBtn.disabled = true;
@@ -135,10 +208,16 @@
             if (result.success) {
                 successMessage.classList.remove('hidden');
                 document.getElementById('successText').textContent = result.message;
+                
+                // Update stats
+                document.getElementById('statsCustomers').textContent = result.stats.customers.added;
+                document.getElementById('statsWeighbridge').textContent = result.stats.weighbridge.added;
+                document.getElementById('statsCrates').textContent = result.stats.crates.added;
+                document.getElementById('statsFinance').textContent = result.stats.finance.added;
 
-                if (result.error_count > 0) {
+                if (result.errors && result.errors.length > 0) {
                     errorMessage.classList.remove('hidden');
-                    document.getElementById('errorText').textContent = `تحذير: ${result.error_count} سطر بها أخطاء`;
+                    document.getElementById('errorText').textContent = `تم الاستيراد مع وجود ${result.errors.length} تنبيهات`;
 
                     const errorList = document.getElementById('errorList');
                     errorList.innerHTML = '';
@@ -149,10 +228,10 @@
                     });
                 }
 
-                // Reset form after 3 seconds
+                // Reset form after 5 seconds
                 setTimeout(() => {
-                    window.location.href = '/customers';
-                }, 3000);
+                    // window.location.href = '/dashboard';
+                }, 5000);
             } else {
                 errorMessage.classList.remove('hidden');
                 document.getElementById('errorText').textContent = result.message;
