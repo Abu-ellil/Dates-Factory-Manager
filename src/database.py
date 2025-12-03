@@ -109,9 +109,7 @@ def add_sample_data():
     
     # Add sample customers
     sample_customers = [
-        ('محمد أحمد', 'تاجر', '01234567890'),
-        ('علي حسن', 'عميل عادي', '01098765432'),
-        ('فاطمة محمود', 'تاجر', '01156789012')
+        
     ]
     
     try:
@@ -123,15 +121,9 @@ def add_sample_data():
                       (datetime.now().strftime('%Y-%m-%d'), 150.0))
         
         # Add default admin user (password: admin123)
-        # Note: In production, use a proper hashed password. For this demo, we'll store it as is or use a simple hash if available.
-        # Since we are running this script standalone, we might not have werkzeug imported.
-        # Let's assume we will handle hashing in the app or just store plain text for this initial setup (NOT SECURE but functional for demo).
-        # BETTER: Let's try to import werkzeug.
-        try:
-            from werkzeug.security import generate_password_hash
-            admin_pass = generate_password_hash('admin123')
-        except ImportError:
-            admin_pass = 'admin123' # Fallback if werkzeug not found (should be handled in app)
+        # We store it as plain text for initial setup to ensure it works on all devices.
+        # The app supports upgrading to hashed passwords later or handling plain text.
+        admin_pass = 'admin123'
 
         cursor.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
                       ('admin', admin_pass, 'admin'))
