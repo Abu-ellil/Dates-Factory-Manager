@@ -11,7 +11,7 @@ venv/
 # Build and Dist
 build/
 dist/
-*.spec
+
 installer_output/
 *.exe
 

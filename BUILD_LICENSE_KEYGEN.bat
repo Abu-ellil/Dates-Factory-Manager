@@ -19,7 +19,7 @@ python -m PyInstaller --noconfirm ^
     --onefile ^
     --windowed ^
     --name "LicenseKeyGenerator" ^
-    --add-data "../src/license_manager.py;." ^
+    --add-data "src/license_manager.py;." ^
     --hidden-import uuid ^
     --hidden-import platform ^
     --hidden-import hashlib ^
@@ -28,7 +28,7 @@ python -m PyInstaller --noconfirm ^
     --hidden-import json ^
     --hidden-import openpyxl ^
     --hidden-import openpyxl.cell._writer ^
-    "../bin/license_keygen_gui.py"
+    "bin/license_keygen_gui.py"
 
 echo.
 echo ========================================
