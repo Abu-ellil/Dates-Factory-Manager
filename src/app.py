@@ -523,7 +523,7 @@ def api_settings_backup():
     """Trigger manual backup"""
     try:
         from backup_scheduler import create_backup
-        backup_file = create_backup()
+        backup_file = create_backup(raise_error=True)
         if backup_file:
             return jsonify({'success': True, 'message': 'تم إنشاء النسخة الاحتياطية بنجاح'})
         else:
@@ -662,13 +662,12 @@ def export_excel():
     from flask import send_file
     
     try:
-        # Create exports directory if it doesn't exist
-        if not os.path.exists('exports'):
-            os.makedirs('exports')
+        # Use secure exports directory from config
+        export_dir = config.EXPORTS_DIR
         
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'Date_Factory_Export_{timestamp}.xlsx'
-        filepath = os.path.join('exports', filename)
+        filepath = os.path.join(export_dir, filename)
         
         export_to_excel(filepath)
         

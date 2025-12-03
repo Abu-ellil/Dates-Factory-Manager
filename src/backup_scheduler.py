@@ -3,17 +3,18 @@ from datetime import datetime
 import os
 from export import export_to_excel
 
-def create_backup():
+from config import config
+
+def create_backup(raise_error=False):
     """Create daily backup of database as Excel file"""
     try:
-        # Create backups directory if it doesn't exist
-        if not os.path.exists('backups'):
-            os.makedirs('backups')
+        # Use secure backups directory from config
+        backups_dir = config.BACKUPS_DIR
         
         # Generate filename with date
         date_str = datetime.now().strftime('%Y-%m-%d')
         filename = f'backup_{date_str}.xlsx'
-        filepath = os.path.join('backups', filename)
+        filepath = os.path.join(backups_dir, filename)
         
         # Export to Excel
         export_to_excel(filepath)
@@ -33,20 +34,25 @@ def create_backup():
         return filepath
     except Exception as e:
         print(f"Backup failed: {e}")
+        import traceback
+        traceback.print_exc()
+        if raise_error:
+            raise e
         return None
 
 def cleanup_old_backups(days_to_keep=30):
     """Delete backups older than specified days"""
     try:
-        if not os.path.exists('backups'):
+        backups_dir = config.BACKUPS_DIR
+        if not os.path.exists(backups_dir):
             return
         
         import time
         current_time = time.time()
         days_in_seconds = days_to_keep * 24 * 60 * 60
         
-        for filename in os.listdir('backups'):
-            filepath = os.path.join('backups', filename)
+        for filename in os.listdir(backups_dir):
+            filepath = os.path.join(backups_dir, filename)
             if os.path.isfile(filepath):
                 file_age = current_time - os.path.getmtime(filepath)
                 if file_age > days_in_seconds:

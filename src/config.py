@@ -49,11 +49,29 @@ def get_app_data_dir():
         os.makedirs(data_dir, exist_ok=True)
     return data_dir
 
+def get_exports_dir():
+    """Get the exports directory in User Documents"""
+    docs_dir = os.path.join(os.path.expanduser('~'), 'Documents')
+    exports_dir = os.path.join(docs_dir, 'Date Factory Manager', 'Exports')
+    if not os.path.exists(exports_dir):
+        os.makedirs(exports_dir, exist_ok=True)
+    return exports_dir
+
+def get_backups_dir():
+    """Get the backups directory in User Documents"""
+    docs_dir = os.path.join(os.path.expanduser('~'), 'Documents')
+    backups_dir = os.path.join(docs_dir, 'Date Factory Manager', 'Backups')
+    if not os.path.exists(backups_dir):
+        os.makedirs(backups_dir, exist_ok=True)
+    return backups_dir
+
 class Config:
     """Application configuration with secure defaults"""
     
     # Data Directory
     DATA_DIR = get_app_data_dir()
+    EXPORTS_DIR = get_exports_dir()
+    BACKUPS_DIR = get_backups_dir()
     
     # Security Settings
     # HARDCODED KEYS FOR PRODUCTION STABILITY

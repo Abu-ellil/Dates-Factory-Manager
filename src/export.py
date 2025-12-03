@@ -3,6 +3,8 @@ from datetime import datetime
 from database import get_connection
 import os
 
+from config import config
+
 def export_to_excel(output_path=None):
     """
     Export all database data to Excel file
@@ -10,7 +12,7 @@ def export_to_excel(output_path=None):
     """
     if output_path is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_path = f'Date_Factory_Export_{timestamp}.xlsx'
+        output_path = os.path.join(config.EXPORTS_DIR, f'Date_Factory_Export_{timestamp}.xlsx')
     
     # Create workbook
     workbook = xlsxwriter.Workbook(output_path)
