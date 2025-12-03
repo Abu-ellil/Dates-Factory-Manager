@@ -664,18 +664,42 @@ def export_excel():
     try:
         # Use secure exports directory from config
         export_dir = config.EXPORTS_DIR
+        current_dir = os.getcwd()
+        print(f"DEBUG: Current working directory: {current_dir}")
+        print(f"DEBUG: Export directory is: {export_dir}")
+        print(f"DEBUG: Export directory exists: {os.path.exists(export_dir)}")
+        print(f"DEBUG: Export directory writable: {os.access(export_dir, os.W_OK) if os.path.exists(export_dir) else 'N/A'}")
+        
+        # Validate export directory
+        if not export_dir or not os.path.exists(export_dir):
+            print(f"ERROR: Export directory does not exist: {export_dir}")
+            return jsonify({'success': False, 'message': f'Export directory does not exist: {export_dir}'}), 500
+            
+        if not os.access(export_dir, os.W_OK):
+            print(f"ERROR: Export directory is not writable: {export_dir}")
+            return jsonify({'success': False, 'message': f'Export directory is not writable: {export_dir}'}), 500
         
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'Date_Factory_Export_{timestamp}.xlsx'
         filepath = os.path.join(export_dir, filename)
+        print(f"DEBUG: Export filepath is: {filepath}")
         
-        export_to_excel(filepath)
+        original_filepath = filepath
+        actual_filepath = export_to_excel(filepath)
         
-        return send_file(filepath, 
-                        as_attachment=True, 
+        # Use the actual file path returned by the export function
+        # This handles cases where the export function had to use a fallback location
+        if actual_filepath != original_filepath:
+            print(f"Export used fallback path: {actual_filepath}")
+        
+        return send_file(actual_filepath,
+                        as_attachment=True,
                         download_name=filename,
                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     except Exception as e:
+        print(f"DEBUG: Export error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':

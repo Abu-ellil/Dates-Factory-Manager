@@ -14,8 +14,49 @@ def export_to_excel(output_path=None):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         output_path = os.path.join(config.EXPORTS_DIR, f'Date_Factory_Export_{timestamp}.xlsx')
     
+    # Ensure the output path is absolute and the directory exists
+    output_path = os.path.abspath(output_path)
+    
+    # Ensure the export directory exists
+    export_dir = os.path.dirname(output_path)
+    if not os.path.exists(export_dir):
+        os.makedirs(export_dir, exist_ok=True)
+        print(f"DEBUG: Created export directory: {export_dir}")
+    
+    print(f"DEBUG: Attempting to create Excel file at: {output_path}")
+    print(f"DEBUG: Output directory exists: {os.path.exists(export_dir)}")
+    print(f"DEBUG: Output directory is writable: {os.access(export_dir, os.W_OK) if os.path.exists(export_dir) else 'N/A'}")
+    
     # Create workbook
-    workbook = xlsxwriter.Workbook(output_path)
+    # Try to create the workbook, and if it fails due to permissions, try a fallback location
+    original_output_path = output_path
+    try:
+        workbook = xlsxwriter.Workbook(output_path)
+    except PermissionError:
+        print(f"Permission denied to write to: {output_path}")
+        print("Attempting to use fallback export directory...")
+        
+        # Try to use a fallback directory in the current working directory
+        fallback_dir = os.path.join(os.getcwd(), 'exports')
+        if not os.path.exists(fallback_dir):
+            os.makedirs(fallback_dir, exist_ok=True)
+        
+        fallback_path = os.path.join(fallback_dir, os.path.basename(output_path))
+        print(f"Using fallback path: {fallback_path}")
+        workbook = xlsxwriter.Workbook(fallback_path)
+        # Update output_path to the fallback path
+        output_path = fallback_path
+    except Exception as e:
+        print(f"Unexpected error creating workbook: {e}")
+        # If there's any other error, also try the fallback
+        fallback_dir = os.path.join(os.getcwd(), 'exports')
+        if not os.path.exists(fallback_dir):
+            os.makedirs(fallback_dir, exist_ok=True)
+        
+        fallback_path = os.path.join(fallback_dir, os.path.basename(output_path))
+        print(f"Using fallback path due to error: {fallback_path}")
+        workbook = xlsxwriter.Workbook(fallback_path)
+        output_path = fallback_path
     
     # Formats
     header_fmt = workbook.add_format({
@@ -181,7 +222,7 @@ def export_to_excel(output_path=None):
     conn.close()
     workbook.close()
     
-    print(f"✅ Excel file exported successfully: {output_path}")
+    print(f"Excel file exported successfully: {output_path}")
     return output_path
 
 if __name__ == '__main__':

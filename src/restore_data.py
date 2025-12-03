@@ -28,6 +28,7 @@ def restore_from_excel(file_path, mode='merge'):
         has_valid_sheets = any(sheet in workbook.sheetnames for sheet in valid_sheets)
         
         if not has_valid_sheets:
+            workbook.close()
             return {'error': 'الملف لا يحتوي على أوراق عمل صالحة (العملاء، الميزان، الصناديق، المالية)'}
             
         conn = get_connection()
@@ -212,6 +213,11 @@ def restore_from_excel(file_path, mode='merge'):
         return stats
         
     except Exception as e:
+        # Ensure workbook is closed in case of exception
+        try:
+            workbook.close()
+        except:
+            pass  # Workbook might not be initialized if the exception occurred during loading
         return {'error': str(e)}
 
 if __name__ == '__main__':

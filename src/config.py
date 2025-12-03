@@ -51,11 +51,19 @@ def get_app_data_dir():
 
 def get_exports_dir():
     """Get the exports directory in User Documents"""
-    docs_dir = os.path.join(os.path.expanduser('~'), 'Documents')
-    exports_dir = os.path.join(docs_dir, 'Date Factory Manager', 'Exports')
-    if not os.path.exists(exports_dir):
-        os.makedirs(exports_dir, exist_ok=True)
-    return exports_dir
+    try:
+        docs_dir = os.path.join(os.path.expanduser('~'), 'Documents')
+        exports_dir = os.path.join(docs_dir, 'Date Factory Manager', 'Exports')
+        if not os.path.exists(exports_dir):
+            os.makedirs(exports_dir, exist_ok=True)
+        return exports_dir
+    except Exception as e:
+        print(f"ERROR in get_exports_dir(): {e}")
+        # If Documents directory is not accessible, try current directory
+        exports_dir = os.path.join(os.getcwd(), 'exports')
+        if not os.path.exists(exports_dir):
+            os.makedirs(exports_dir, exist_ok=True)
+        return exports_dir
 
 def get_backups_dir():
     """Get the backups directory in User Documents"""
