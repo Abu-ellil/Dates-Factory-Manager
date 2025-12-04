@@ -11,7 +11,8 @@ def import_customers_from_excel(file_path):
     """
     workbook = None
     try:
-        workbook = openpyxl.load_workbook(file_path)
+        # Load workbook in read-only and data-only mode to avoid locking issues
+        workbook = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
         sheet = workbook.active
         
         conn = get_connection()
@@ -104,6 +105,8 @@ def import_customers_from_excel(file_path):
                 workbook.close()
             except:
                 pass  # Already closed or other issue
+            # Explicitly set to None to remove reference
+            workbook = None
 
 if __name__ == '__main__':
     # Test import

@@ -22,7 +22,8 @@ def restore_from_excel(file_path, mode='merge'):
     
     workbook = None
     try:
-        workbook = openpyxl.load_workbook(file_path)
+        # Load workbook in read-only and data-only mode to avoid locking issues
+        workbook = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
         
         # Check if file has any valid sheets
         valid_sheets = ['العملاء (Customers)', 'الميزان (Weighbridge)', 'الصناديق (Crates)', 'المالية (Finance)']
@@ -160,7 +161,7 @@ def restore_from_excel(file_path, mode='merge'):
                     
                     cursor.execute('''
                         INSERT INTO crates (date, customer_id, crates_out, crates_returned, handler, notes)
-                        VALUES (?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?)
                     ''', (date, customer_id, crates_out, crates_returned, handler, notes))
                     
                     stats['crates']['added'] += 1

@@ -89,6 +89,14 @@ def test_bulk_import_file_handling():
         # Test normal operation
         success_count, error_count, errors = import_customers_from_excel(test_file_path)
         print(f"✓ import_customers_from_excel completed with {success_count} successes, {error_count} errors")
+        if errors:
+            print(f"  Errors: {errors}")
+        
+        # Force garbage collection and add delay to allow file handles to be released
+        import time
+        import gc
+        gc.collect()
+        time.sleep(0.5)
         
         # Test that we can now delete the file (meaning it's not locked)
         os.remove(test_file_path)
@@ -99,6 +107,8 @@ def test_bulk_import_file_handling():
         print(f"✗ Error during import test: {e}")
         # Try to manually delete the file for cleanup
         try:
+            import time
+            time.sleep(0.5)  # Wait before attempting to delete
             os.remove(test_file_path)
         except:
             pass
